@@ -10,6 +10,7 @@ const path = require('path');
 const authRoute = require('../routes/authRoutes');
 const adminRoute = require('../routes/adminRoutes');
 const classRoute = require('../routes/classRoutes');
+const studentRoute = require('../routes/studentRoutes');
 
 // initialize express app
 const app = express();
@@ -37,6 +38,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/api', authRoute); // auth routes
 app.use('/api', adminRoute); // admin routes
 app.use('/api/classes', classRoute); // class routes
+app.use('/api/student', studentRoute); //student routes
 
 
 module.exports=app
