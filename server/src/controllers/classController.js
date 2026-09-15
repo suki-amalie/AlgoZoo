@@ -60,7 +60,7 @@ exports.generateJoinLink = async (req, res) => {
     } catch (error) {
         console.error(error);
         return res.status(500).json({
-            status: 'error',
+            status: ('generateJoinLink Error:', error),
             message: 'SERVER SIDE ERROR',
         });
     }

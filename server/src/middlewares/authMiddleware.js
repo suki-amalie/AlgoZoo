@@ -137,6 +137,27 @@ exports.verifyTrainer = async (req, res, next) => {
     return res.status(500).json({ status: 'error', message: 'SERVER SIDE ERROR' });
   }
 };
+
+// Middleware to check if user is a student
+exports.verifyStudent = async(req, res, next) => {
+  try {
+    const { user } = req;
+
+    if (!user) {
+      return res.status(401).json({ status: 'error', message: 'Sorry, User does not exist' });
+    }
+
+    if (user.role === 'student') {
+      return next();
+    } else {
+      return res.status(403).json({ status: 'error', message: 'Access denied. Only student can access.' });
+    }    
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ status: 'error', message: 'SERVER SIDE ERROR' });
+  }
+};
+
 // Helper: Auto refresh access token if expired and refresh token is valid
 const tryRefreshAccessToken = (req, res, next) => {
   const refreshToken = req.cookies.refreshToken;
