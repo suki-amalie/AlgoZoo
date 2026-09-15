@@ -29,6 +29,11 @@ const loginResponse = (res, user) => {
       time: currentDateTime(),
       access_token_expires:getDateAfterDuration(JWT_ACCESS_TOKEN_EXPIRES),
       refresh_token_expires:getDateAfterDuration(JWT_REFRESH_TOKEN_EXPIRES),
+      // Also returned in the body (not just as an httpOnly cookie) so non-browser clients
+      // (Postman/curl/mobile apps) can grab it and send it as `Authorization: Bearer <token>`,
+      // which is what isAuthenticatedUser actually checks.
+      access_token: accessToken,
+      refresh_token: refreshToken,
       result: {
         status: 'success',
         message: 'User login successful',

@@ -1,0 +1,246 @@
+{
+  "info": {
+    "name": "AlgoZoo API",
+    "description": "Auth, Admin, Trainer, Problem bank endpoints for the AlgoZoo backend.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3000/api" },
+    { "key": "access_token", "value": "" },
+    { "key": "class_id", "value": "" },
+    { "key": "problem_id", "value": "" },
+    { "key": "submission_id", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"trainer_test\",\n  \"password\": \"123456\",\n  \"name\": \"Trainer Test\",\n  \"email\": \"trainer_test@gmail.com\",\n  \"role\": \"trainer\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.access_token) { pm.collectionVariables.set('access_token', data.access_token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"trainer_test\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/auth/logout", "host": ["{{base_url}}"], "path": ["auth", "logout"] }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{refresh_token}}" }],
+            "url": { "raw": "{{base_url}}/auth/refresh-token", "host": ["{{base_url}}"], "path": ["auth", "refresh-token"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get all users",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/admin/get-user", "host": ["{{base_url}}"], "path": ["admin", "get-user"] }
+          }
+        },
+        {
+          "name": "Get user by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/admin/get-user/:id",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "get-user", ":id"],
+              "variable": [{ "key": "id", "value": "" }]
+            }
+          }
+        },
+        {
+          "name": "Get users by role",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/admin/users?role=student",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users"],
+              "query": [{ "key": "role", "value": "student" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trainer",
+      "item": [
+        {
+          "name": "Dashboard",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/trainer/dashboard", "host": ["{{base_url}}"], "path": ["trainer", "dashboard"] }
+          }
+        },
+        {
+          "name": "List classes",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/trainer/classes", "host": ["{{base_url}}"], "path": ["trainer", "classes"] }
+          }
+        },
+        {
+          "name": "Class detail",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/trainer/classes/{{class_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["trainer", "classes", "{{class_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Assign problem to class",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"problem_id\": \"{{problem_id}}\",\n  \"deadline\": \"2026-12-31T23:59:59.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/trainer/classes/{{class_id}}/problems",
+              "host": ["{{base_url}}"],
+              "path": ["trainer", "classes", "{{class_id}}", "problems"]
+            }
+          }
+        },
+        {
+          "name": "List problems assigned in class",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/trainer/classes/{{class_id}}/problems",
+              "host": ["{{base_url}}"],
+              "path": ["trainer", "classes", "{{class_id}}", "problems"]
+            }
+          }
+        },
+        {
+          "name": "Remove problem from class",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/trainer/classes/{{class_id}}/problems/{{problem_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["trainer", "classes", "{{class_id}}", "problems", "{{problem_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Review submission",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"feedback\": \"Code chay dung nhung chua toi uu do phuc tap.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/trainer/review/{{submission_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["trainer", "review", "{{submission_id}}"]
+            }
+          }
+        },
+        {
+          "name": "List submissions",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/trainer/submissions", "host": ["{{base_url}}"], "path": ["trainer", "submissions"] }
+          }
+        },
+        {
+          "name": "Submission detail",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/trainer/submissions/{{submission_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["trainer", "submissions", "{{submission_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Problems",
+      "item": [
+        {
+          "name": "List problems",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/problems?search=&difficulty=",
+              "host": ["{{base_url}}"],
+              "path": ["problems"],
+              "query": [
+                { "key": "search", "value": "" },
+                { "key": "difficulty", "value": "" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Problem detail",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/problems/{{problem_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["problems", "{{problem_id}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

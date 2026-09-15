@@ -27,4 +27,7 @@ const ClassProblemSchema = new mongoose.Schema(
   { timestamps: { createdAt: 'created_at', updatedAt: false } }
 );
 
+// Prevent assigning the same problem to the same class more than once
+ClassProblemSchema.index({ class_id: 1, problem_id: 1 }, { unique: true });
+
 module.exports = mongoose.model('ClassProblem', ClassProblemSchema);
