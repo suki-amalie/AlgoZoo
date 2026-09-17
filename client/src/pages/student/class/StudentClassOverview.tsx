@@ -1,7 +1,9 @@
-import { useParams } from 'react-router-dom'
-import { Users, BookOpen } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useParams, Link } from 'react-router-dom'
+import { Users, BookOpen, CheckCircle2, Clock, Circle } from 'lucide-react'
 import { ClassTabNav } from '../../../components/layout/ClassTabNav'
 import { ProgressBar } from '../../../components/ui/ProgressBar'
+import { getProblemStatus } from '../../../utils/studentStore'
 
 const classData: Record<string, { name: string; description: string; status: 'ACTIVE' | 'INACTIVE'; trainers: number; students: number; completed: number; total: number }> = {
   '2': {
@@ -15,17 +17,35 @@ const classData: Record<string, { name: string; description: string; status: 'AC
   },
 }
 
-const activity = [
-  { id: 1, label: 'Two Sum', status: 'Reviewed', icon: '✓', color: 'text-green-600' },
-  { id: 2, label: 'Binary Search', status: 'Pending review', icon: '◷', color: 'text-yellow-600' },
-  { id: 3, label: 'Reverse Linked List', status: 'Not started', icon: '○', color: 'text-gray-400' },
-  { id: 4, label: 'Process Scheduling', status: 'Not started', icon: '○', color: 'text-gray-400' },
+type ProblemProgress = {
+  id: number
+  label: string
+}
+
+const baseProblemProgress: ProblemProgress[] = [
+  { id: 1, label: 'Two Sum' },
+  { id: 2, label: 'Binary Search' },
+  { id: 3, label: 'Reverse Linked List' },
+  { id: 4, label: 'Process Scheduling' },
 ]
+
+const statusConfig: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
+  reviewed: { icon: <CheckCircle2 size={16} className="text-green-500" />, label: 'Reviewed', color: 'text-green-600' },
+  pending: { icon: <Clock size={16} className="text-orange-500" />, label: 'Pending review', color: 'text-orange-600' },
+  'not-started': { icon: <Circle size={16} className="text-gray-300" />, label: 'Not started', color: 'text-gray-400' },
+}
 
 export function StudentClassOverview() {
   const { classId = '2' } = useParams()
   const cls = classData[classId] ?? classData['2']
   const pct = Math.round((cls.completed / cls.total) * 100)
+  const [tick, setTick] = useState(0)
+
+  useEffect(() => {
+    const handleUpdate = () => setTick((t) => t + 1)
+    window.addEventListener('algozoo_store_updated', handleUpdate)
+    return () => window.removeEventListener('algozoo_store_updated', handleUpdate)
+  }, [])
 
   const tabs = [
     { label: 'Overview', to: `/student/classes/${classId}/overview` },
@@ -35,7 +55,11 @@ export function StudentClassOverview() {
   return (
     <div>
       <ClassTabNav
-        crumbs={[{ label: 'My Classes', to: '/student/classes' }, { label: cls.name }]}
+        crumbs={[
+          { label: 'My Classes', to: '/student/classes' },
+          { label: cls.name, to: `/student/classes/${classId}/overview` },
+          { label: 'Overview' },
+        ]}
         title={cls.name}
         status={cls.status}
         tabs={tabs}
@@ -76,22 +100,37 @@ export function StudentClassOverview() {
           </div>
         </div>
 
-        {/* Activity */}
+        {/* Problem Progress */}
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <div className="flex items-center gap-2 mb-4">
             <BookOpen size={16} className="text-gray-400" />
             <h3 className="font-bold text-gray-900">Problem Progress</h3>
           </div>
-          <div className="space-y-2.5">
-            {activity.map((a) => (
-              <div key={a.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                <span className="text-sm text-gray-800">{a.label}</span>
-                <div className={`flex items-center gap-1.5 text-sm font-medium ${a.color}`}>
-                  <span>{a.icon}</span>
-                  <span>{a.status}</span>
-                </div>
-              </div>
-            ))}
+          <div className="space-y-1">
+            {baseProblemProgress.map((p) => {
+              const status = getProblemStatus(p.id)
+              const cfg = statusConfig[status]
+              const link =
+                status !== 'not-started'
+                  ? `/student/submissions/${p.id}?fromClass=${classId}`
+                  : `/student/classes/${classId}/problems/${p.id}`
+
+              return (
+                <Link
+                  key={p.id}
+                  to={link}
+                  className="flex items-center justify-between py-2.5 px-3 -mx-3 rounded-xl hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors group"
+                >
+                  <span className="text-sm font-medium text-gray-800 group-hover:text-accent transition-colors">
+                    {p.label}
+                  </span>
+                  <div className={`flex items-center gap-1.5 text-xs font-semibold ${cfg.color}`}>
+                    {cfg.icon}
+                    <span>{cfg.label}</span>
+                  </div>
+                </Link>
+              )
+            })}
           </div>
         </div>
       </div>

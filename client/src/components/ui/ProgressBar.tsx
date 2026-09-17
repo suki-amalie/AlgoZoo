@@ -1,16 +1,17 @@
-interface ProgressBarProps {
+export function ProgressBar({
+  value,
+  height = 'h-1.5',
+  color = 'bg-accent',
+}: {
   value: number
-  color?: string
   height?: string
-}
-
-export function ProgressBar({ value, color = 'bg-accent', height = 'h-1.5' }: ProgressBarProps) {
-  const clamped = Math.max(0, Math.min(100, value))
+  color?: string
+}) {
   return (
-    <div className={`w-full bg-gray-200 rounded-full ${height} overflow-hidden`}>
+    <div className={`w-full ${height} rounded-full bg-gray-200 overflow-hidden`}>
       <div
-        className={`${color} ${height} rounded-full transition-all duration-300`}
-        style={{ width: `${clamped}%` }}
+        className={`${height} rounded-full ${color} transition-all duration-500`}
+        style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
       />
     </div>
   )

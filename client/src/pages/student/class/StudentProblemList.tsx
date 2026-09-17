@@ -1,12 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Search, CheckCircle2, Clock, Circle, ChevronDown, ChevronRight } from 'lucide-react'
 import { ClassTabNav } from '../../../components/layout/ClassTabNav'
 import { TypeBadge } from '../../../components/ui/Badge'
-
-const classNames: Record<string, string> = {
-  '2': 'WeCamp Batch 22',
-}
+import { getProblemStatus } from '../../../utils/studentStore'
 
 type ProblemType = 'DSA' | 'OS' | 'Database' | 'Other'
 type ProblemStatus = 'not-started' | 'pending' | 'reviewed'
@@ -18,16 +15,25 @@ type ClassProblem = {
   deadline: string | null
   status: ProblemStatus
   isPastDeadline: boolean
+  submissionId?: number // maps to /student/submissions/:id when reviewed/pending
 }
 
-const problems: ClassProblem[] = [
-  { id: 1, title: 'Two Sum', type: 'DSA', deadline: 'Sep 20, 2026', status: 'reviewed', isPastDeadline: false },
-  { id: 2, title: 'Binary Search', type: 'DSA', deadline: 'Sep 22, 2026', status: 'pending', isPastDeadline: false },
-  { id: 3, title: 'Reverse Linked List', type: 'DSA', deadline: 'Sep 25, 2026', status: 'not-started', isPastDeadline: false },
-  { id: 4, title: 'Process Scheduling', type: 'OS', deadline: 'Sep 18, 2026', status: 'not-started', isPastDeadline: true },
-  { id: 5, title: 'Memory Management', type: 'OS', deadline: 'Sep 28, 2026', status: 'not-started', isPastDeadline: false },
-  { id: 6, title: 'SQL Queries', type: 'Database', deadline: 'Oct 1, 2026', status: 'not-started', isPastDeadline: false },
+const baseProblems: Omit<ClassProblem, 'status' | 'submissionId'>[] = [
+  { id: 1, title: 'Two Sum', type: 'DSA', deadline: 'Sep 20, 2026', isPastDeadline: false },
+  { id: 2, title: 'Binary Search', type: 'DSA', deadline: 'Sep 22, 2026', isPastDeadline: false },
+  { id: 3, title: 'Reverse Linked List', type: 'DSA', deadline: 'Sep 25, 2026', isPastDeadline: false },
+  { id: 4, title: 'Process Scheduling', type: 'OS', deadline: 'Sep 18, 2026', isPastDeadline: true },
+  { id: 5, title: 'Memory Management', type: 'OS', deadline: 'Sep 28, 2026', isPastDeadline: false },
+  { id: 6, title: 'SQL Queries', type: 'Database', deadline: 'Oct 1, 2026', isPastDeadline: false },
 ]
+
+// Determine link target based on status
+function getProblemLink(classId: string, p: ClassProblem): string {
+  if ((p.status === 'reviewed' || p.status === 'pending') && p.submissionId) {
+    return `/student/submissions/${p.submissionId}?fromClass=${classId}`
+  }
+  return `/student/classes/${classId}/problems/${p.id}`
+}
 
 const typeOrder: ProblemType[] = ['DSA', 'OS', 'Database', 'Other']
 
@@ -45,16 +51,31 @@ const statusLabel: Record<ProblemStatus, string> = {
 
 const statusClass: Record<ProblemStatus, string> = {
   reviewed: 'text-green-600 font-medium',
-  pending: 'text-yellow-600',
+  pending: 'text-orange-600',
   'not-started': 'text-gray-400',
 }
 
 export function StudentProblemList() {
   const { classId = '2' } = useParams()
-  const className = classNames[classId] ?? 'WeCamp Batch 22'
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | ProblemStatus>('all')
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const [tick, setTick] = useState(0)
+
+  useEffect(() => {
+    const handleUpdate = () => setTick((t) => t + 1)
+    window.addEventListener('algozoo_store_updated', handleUpdate)
+    return () => window.removeEventListener('algozoo_store_updated', handleUpdate)
+  }, [])
+
+  const problems: ClassProblem[] = baseProblems.map((p) => {
+    const status = getProblemStatus(p.id)
+    return {
+      ...p,
+      status,
+      submissionId: status !== 'not-started' ? p.id : undefined,
+    }
+  })
 
   const tabs = [
     { label: 'Overview', to: `/student/classes/${classId}/overview` },
@@ -84,10 +105,11 @@ export function StudentProblemList() {
       <ClassTabNav
         crumbs={[
           { label: 'My Classes', to: '/student/classes' },
-          { label: className, to: `/student/classes/${classId}/overview` },
+          { label: 'WeCamp Batch 22', to: `/student/classes/${classId}/overview` },
           { label: 'Problems' },
         ]}
-        title={className}
+        title="WeCamp Batch 22"
+        status="ACTIVE"
         tabs={tabs}
       />
 
@@ -117,7 +139,7 @@ export function StudentProblemList() {
         </div>
       </div>
 
-      {/* Grouped by topic */}
+      {/* Grouped by type */}
       {Object.keys(grouped).length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm py-12 text-center text-sm text-gray-400">
           No problems found
@@ -160,7 +182,7 @@ export function StudentProblemList() {
                     {items.map((p, i) => (
                       <Link
                         key={p.id}
-                        to={`/student/classes/${classId}/problems/${p.id}`}
+                        to={getProblemLink(classId, p)}
                         className={`flex items-center px-5 py-3.5 hover:bg-gray-50 transition-colors gap-3 ${
                           i < items.length - 1 ? 'border-b border-gray-50' : ''
                         }`}

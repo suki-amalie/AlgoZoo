@@ -14,7 +14,7 @@ import { StudentDashboard } from './pages/student/StudentDashboard'
 import { StudentClasses } from './pages/student/StudentClasses'
 import { StudentClassOverview } from './pages/student/class/StudentClassOverview'
 import { StudentProblemList } from './pages/student/class/StudentProblemList'
-import { ProblemWorkspace } from './pages/student/ProblemWorkspace'
+import { StudentProblemWorkspace } from './pages/student/class/StudentProblemWorkspace'
 import { StudentSubmissions } from './pages/student/StudentSubmissions'
 import { SubmissionStatus } from './pages/student/SubmissionStatus'
 
@@ -56,9 +56,9 @@ function AppRoutes() {
         <Route path="/student/classes/:classId" element={<Navigate to="overview" replace />} />
         <Route path="/student/classes/:classId/overview" element={<StudentClassOverview />} />
         <Route path="/student/classes/:classId/problems" element={<StudentProblemList />} />
-        <Route path="/student/classes/:classId/problems/:problemId" element={<ProblemWorkspace />} />
+        <Route path="/student/classes/:classId/problems/:problemId" element={<StudentProblemWorkspace />} />
         <Route path="/student/submissions" element={<StudentSubmissions />} />
-        <Route path="/student/submissions/:id" element={<SubmissionStatus />} />
+        <Route path="/student/submissions/:submissionId" element={<SubmissionStatus />} />
 
         {/* Trainer */}
         <Route path="/trainer/dashboard" element={<TrainerDashboard />} />
