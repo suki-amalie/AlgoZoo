@@ -30,9 +30,11 @@ import { ReviewSubmission } from './pages/trainer/ReviewSubmission'
 
 // Admin
 import { AdminDashboard } from './pages/admin/AdminDashboard'
+import { AdminClasses } from './pages/admin/AdminClasses'
+import { AdminManageClass } from './pages/admin/AdminManageClass'
 import { AdminUsers } from './pages/admin/AdminUsers'
+import { AdminUserDetail } from './pages/admin/AdminUserDetail'
 import { AdminProblems } from './pages/admin/AdminProblems'
-import { ManageClass } from './pages/admin/ManageClass'
 
 function RequireAuth() {
   const { user, authLoading } = useAuth()
@@ -73,8 +75,10 @@ function AppRoutes() {
 
         {/* Admin */}
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/classes/:classId/manage" element={<ManageClass />} />
+        <Route path="/admin/classes" element={<AdminClasses />} />
+        <Route path="/admin/classes/:classId/manage" element={<AdminManageClass />} />
         <Route path="/admin/users" element={<AdminUsers />} />
+        <Route path="/admin/users/:userId" element={<AdminUserDetail />} />
         <Route path="/admin/problems" element={<AdminProblems />} />
 
         {/* Notifications (all roles) */}

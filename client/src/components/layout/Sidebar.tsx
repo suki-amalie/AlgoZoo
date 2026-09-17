@@ -34,8 +34,8 @@ function getNavItems(role: string): NavItem[] {
   // admin
   return [
     { to: '/admin/dashboard', icon: <LayoutDashboard size={17} />, label: 'Dashboard' },
+    { to: '/admin/classes', icon: <BookOpen size={17} />, label: 'Classes' },
     { to: '/admin/users', icon: <Users size={17} />, label: 'Users' },
-    { to: '/admin/problems', icon: <Library size={17} />, label: 'Problem Bank' },
   ]
 }
 
