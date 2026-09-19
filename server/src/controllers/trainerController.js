@@ -377,7 +377,9 @@ exports.reviewSubmission = async (req, res) => {
       context: `${cls?.name ?? ''} · ${problem?.problemType ?? ''}`,
       entityType: 'submission',
       entityId: submission._id,
-      linkTo: `/student/submissions/${submission._id}`,
+      // SubmissionStatus.tsx is mounted at /student/submissions/:id but actually queries
+      // by class_problem_id (see StudentSubmissions.tsx's own links), not the submission's own _id.
+      linkTo: `/student/submissions/${classProblem._id}`,
     });
 
     res.status(200).json({
