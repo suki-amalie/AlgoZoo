@@ -25,9 +25,9 @@ const styles: Record<string, string> = {
   medium: 'bg-yellow-100 text-yellow-800',
   hard: 'bg-red-100 text-red-800',
   // roles
-  'role-admin': 'bg-red-100 text-red-700',
-  'role-trainer': 'bg-purple-100 text-purple-700',
-  'role-student': 'bg-blue-100 text-blue-700',
+  'role-admin': 'bg-purple-100 text-purple-700',
+  'role-trainer': 'bg-blue-100 text-blue-700',
+  'role-student': 'bg-red-100 text-red-700',
   // old
   submitted: 'bg-blue-100 text-blue-700',
   'needs-revision': 'bg-red-100 text-red-700',

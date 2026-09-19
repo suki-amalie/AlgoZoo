@@ -90,20 +90,22 @@ export function ClassSubmissions() {
     { label: 'Students', to: `/trainer/classes/${classId}/students` },
   ]
 
-  const filtered = [...submissions]
+  const baseFiltered = [...submissions]
     .sort((a, b) => b.sortTs - a.sortTs)
     .filter((s) => {
-      const matchTab =
-        tab === 'all' ? true :
-        tab === 'pending' ? (s.status === 'PENDING' && !s.isLate) :
-        tab === 'reviewed' ? s.status === 'REVIEWED' :
-        s.isLate
       const matchSearch = search === '' || s.student.toLowerCase().includes(search.toLowerCase()) || s.problem.toLowerCase().includes(search.toLowerCase())
       const matchProblem = problemFilter === '' || s.problem === problemFilter
       const matchTopic = topicFilter === '' || s.topic === topicFilter
       const matchStudent = studentFilter === '' || s.student === studentFilter
-      return matchTab && matchSearch && matchProblem && matchTopic && matchStudent
+      return matchSearch && matchProblem && matchTopic && matchStudent
     })
+
+  const filtered = baseFiltered.filter((s) =>
+    tab === 'all' ? true :
+    tab === 'pending' ? (s.status === 'PENDING' && !s.isLate) :
+    tab === 'reviewed' ? s.status === 'REVIEWED' :
+    s.isLate
+  )
 
   // Group by problem when a specific problem or topic filter is active
   const shouldGroup = problemFilter !== '' || topicFilter !== ''
@@ -150,7 +152,7 @@ export function ClassSubmissions() {
       {activeFilterLabel && (
         <div className="flex items-center gap-2 mb-4 bg-accent/5 border border-accent/20 rounded-xl px-4 py-2.5">
           <span className="text-sm text-accent font-medium">Filtering by: {activeFilterLabel}</span>
-          <span className="text-sm text-gray-400">· {filtered.length} submission{filtered.length !== 1 ? 's' : ''}</span>
+          <span className="text-sm text-gray-400">· {baseFiltered.length} submission{baseFiltered.length !== 1 ? 's' : ''}</span>
           <button
             onClick={clearFilter}
             className="ml-auto flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 font-medium"
@@ -164,10 +166,10 @@ export function ClassSubmissions() {
       <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
         <div className="flex gap-1">
           {([
-            { key: 'all', label: `All (${submissions.length})` },
-            { key: 'pending', label: `Pending (${submissions.filter(s => s.status === 'PENDING' && !s.isLate).length})` },
-            { key: 'reviewed', label: `Reviewed (${submissions.filter(s => s.status === 'REVIEWED').length})` },
-            { key: 'late', label: `Late (${submissions.filter(s => s.isLate).length})` },
+            { key: 'all', label: `All (${baseFiltered.length})` },
+            { key: 'pending', label: `Pending (${baseFiltered.filter(s => s.status === 'PENDING' && !s.isLate).length})` },
+            { key: 'reviewed', label: `Reviewed (${baseFiltered.filter(s => s.status === 'REVIEWED').length})` },
+            { key: 'late', label: `Late (${baseFiltered.filter(s => s.isLate).length})` },
           ] as const).map(({ key, label }) => (
             <button
               key={key}

@@ -1,10 +1,7 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import {
   ChevronLeft, X, Send, Settings, Lightbulb, Info, AlertCircle,
-  Bold, Italic, Underline, Strikethrough,
-  ChevronDown, List, ListOrdered,
-  Link2, ImageIcon, Code2, MoreHorizontal, Undo2, Redo2,
-  Paperclip, ExternalLink, FileText,
+  ChevronDown, Link2, ExternalLink,
 } from 'lucide-react'
 import { TypeBadge } from './Badge'
 import { Button } from './Button'
@@ -22,7 +19,7 @@ export type Resource = {
 export type ProblemDraft = {
   title: string
   type: ProblemType
-  difficulty: Difficulty
+  difficulty: Difficulty | null
   description: string
   resources: Resource[]
 }
@@ -30,7 +27,7 @@ export type ProblemDraft = {
 interface ProblemComposerProps {
   mode: 'create' | 'edit'
   initial?: ProblemDraft
-  onSave: (draft: ProblemDraft) => void
+  onSave: (draft: ProblemDraft) => Promise<void>
   onClose: () => void
   saving?: boolean
   error?: string | null
@@ -49,10 +46,13 @@ export function ProblemComposer({ mode, initial, onSave, onClose, saving = false
   const [title, setTitle] = useState(initial?.title ?? '')
   const [titleError, setTitleError] = useState(false)
   const [type, setType] = useState<ProblemType>(initial?.type ?? 'DSA')
-  const [difficulty, setDifficulty] = useState<Difficulty>(initial?.difficulty ?? 'medium')
+  const [difficulty, setDifficulty] = useState<Difficulty | null>(initial?.difficulty ?? null)
   const [description, setDescription] = useState(initial?.description ?? '')
   const [descriptionError, setDescriptionError] = useState(false)
-  const [resources, setResources] = useState<Resource[]>(initial?.resources ?? [])
+  // Only keep URL-based resources (no file attachments), max one link
+  const [resources, setResources] = useState<Resource[]>(
+    (initial?.resources ?? []).filter((r) => !r.filename && r.url)
+  )
   const [lastSeenError, setLastSeenError] = useState(error)
   const [errorDismissed, setErrorDismissed] = useState(false)
   if (error !== lastSeenError) {
@@ -62,43 +62,30 @@ export function ProblemComposer({ mode, initial, onSave, onClose, saving = false
   const [topicOpen, setTopicOpen] = useState(false)
   const [addLinkOpen, setAddLinkOpen] = useState(false)
   const [linkForm, setLinkForm] = useState({ label: '', url: '' })
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const isEdit = mode === 'edit'
 
-  /* ── resource helpers ── */
+  /* ── resource helpers (one link only) ── */
+  const link = resources.find((r) => !r.filename && r.url) ?? null
+
   const addLink = () => {
     if (!linkForm.url.trim()) return
-    setResources((prev) => [
-      ...prev,
-      { id: nextResourceId++, label: linkForm.label, url: linkForm.url.trim() },
-    ])
+    setResources([{ id: nextResourceId++, label: linkForm.label, url: linkForm.url.trim() }])
     setLinkForm({ label: '', url: '' })
     setAddLinkOpen(false)
   }
 
-  const handleFileAttach = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setResources((prev) => [
-      ...prev,
-      { id: nextResourceId++, label: file.name, url: '', filename: file.name },
-    ])
-    e.target.value = ''
-  }
-
-  const removeResource = (id: number) =>
+  const removeLink = (id: number) =>
     setResources((prev) => prev.filter((r) => r.id !== id))
 
   /* ── publish ── */
-  const handlePublish = () => {
+  const handlePublish = async () => {
     const trimmed = title.trim()
-    const trimmedDescription = description.trim()
     const missingTitle = !trimmed
-    const missingDescription = !trimmedDescription
+    const missingDescription = !description.trim()
     setTitleError(missingTitle)
     setDescriptionError(missingDescription)
     if (missingTitle || missingDescription) return
-    onSave({ title: trimmed, type, difficulty, description: trimmedDescription, resources })
+    await onSave({ title: trimmed, type, difficulty, description, resources })
   }
 
   return (
@@ -116,7 +103,7 @@ export function ProblemComposer({ mode, initial, onSave, onClose, saving = false
           <Button variant="secondary" size="sm" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
-          <Button size="sm" onClick={handlePublish} disabled={saving}>
+          <Button size="sm" onClick={() => void handlePublish()} disabled={saving}>
             <Send size={13} />
             {saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Publish'}
           </Button>
@@ -153,7 +140,7 @@ export function ProblemComposer({ mode, initial, onSave, onClose, saving = false
           </h1>
           <p className="text-sm text-gray-400 mt-1">
             Write a new problem to add to your problem bank.{' '}
-            <span className="text-gray-400">You can use rich text, code blocks, and attach resources.</span>
+            <span className="text-gray-400">You can use rich text and attach a resource link.</span>
           </p>
         </div>
 
@@ -196,43 +183,6 @@ export function ProblemComposer({ mode, initial, onSave, onClose, saving = false
                   ? 'border-red-400'
                   : 'border-gray-200 focus-within:border-accent/40'
               }`}>
-                {/* Toolbar */}
-                <div className="flex items-center gap-0.5 px-3 py-2 border-b border-gray-100 bg-white flex-wrap">
-                  <ToolbarGroup>
-                    <ToolbarBtn icon={<Bold size={13} />} label="Bold" />
-                    <ToolbarBtn icon={<Italic size={13} />} label="Italic" />
-                    <ToolbarBtn icon={<Underline size={13} />} label="Underline" />
-                    <ToolbarBtn icon={<Strikethrough size={13} />} label="Strikethrough" />
-                  </ToolbarGroup>
-                  <ToolbarDivider />
-                  <button className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors">
-                    Normal <ChevronDown size={11} className="text-gray-400" />
-                  </button>
-                  <ToolbarDivider />
-                  <ToolbarGroup>
-                    <ToolbarBtn icon={<span className="text-xs font-bold">H1</span>} label="Heading 1" />
-                    <ToolbarBtn icon={<span className="text-xs font-bold">H2</span>} label="Heading 2" />
-                  </ToolbarGroup>
-                  <ToolbarDivider />
-                  <ToolbarGroup>
-                    <ToolbarBtn icon={<List size={13} />} label="Bullet list" />
-                    <ToolbarBtn icon={<ListOrdered size={13} />} label="Numbered list" />
-                  </ToolbarGroup>
-                  <ToolbarDivider />
-                  <ToolbarGroup>
-                    <ToolbarBtn icon={<Link2 size={13} />} label="Link" />
-                    <ToolbarBtn icon={<ImageIcon size={13} />} label="Image" />
-                    <ToolbarBtn icon={<Code2 size={13} />} label="Code block" />
-                  </ToolbarGroup>
-                  <ToolbarDivider />
-                  <ToolbarBtn icon={<MoreHorizontal size={13} />} label="More" />
-                  <div className="flex-1" />
-                  <ToolbarGroup>
-                    <ToolbarBtn icon={<Undo2 size={13} />} label="Undo" />
-                    <ToolbarBtn icon={<Redo2 size={13} />} label="Redo" />
-                  </ToolbarGroup>
-                </div>
-                {/* Editor area */}
                 <textarea
                   value={description}
                   onChange={(e) => { setDescription(e.target.value); setDescriptionError(false) }}
@@ -246,31 +196,26 @@ export function ProblemComposer({ mode, initial, onSave, onClose, saving = false
               {descriptionError && <p className="text-xs text-red-500 mt-1.5">Description is required.</p>}
             </div>
 
-            {/* Resources */}
+            {/* Resources — one link only */}
             <div>
               <label className="block text-sm font-semibold text-gray-800 mb-1">Resources</label>
               <p className="text-xs text-gray-400 mb-3">
-                Attach files or add links to provide additional materials for this problem.
+                Attach a link to provide additional material for this problem.
               </p>
-              <div className="flex items-center gap-2 mb-3">
-                <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileAttach} />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  <Paperclip size={14} /> Attach file
-                </button>
+
+              {/* Show "Add link" only when no link exists and form is not open */}
+              {!link && !addLinkOpen && (
                 <button
                   onClick={() => { setAddLinkOpen(true); setLinkForm({ label: '', url: '' }) }}
                   className="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   <Link2 size={14} /> Add link
                 </button>
-              </div>
+              )}
 
-              {/* Add link inline form */}
+              {/* Inline link form */}
               {addLinkOpen && (
-                <div className="mb-3 bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-2">
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-2">
                   <input
                     value={linkForm.label}
                     onChange={(e) => setLinkForm({ ...linkForm, label: e.target.value })}
@@ -303,52 +248,50 @@ export function ProblemComposer({ mode, initial, onSave, onClose, saving = false
                 </div>
               )}
 
-              {/* Resource list / empty state */}
-              <div className={`border-2 border-dashed rounded-xl transition-colors ${
-                resources.length === 0 ? 'border-gray-200 py-10' : 'border-gray-100 p-3 space-y-2'
-              }`}>
-                {resources.length === 0 ? (
-                  <div className="flex flex-col items-center gap-2 text-center">
-                    <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
-                      <FileText size={18} className="text-gray-400" />
-                    </div>
-                    <p className="text-sm font-medium text-gray-500">No resources added yet</p>
-                    <p className="text-xs text-gray-400">Attach files or links to help students better understand this problem.</p>
+              {/* Saved link */}
+              {link && (
+                <div className="flex items-center gap-3 bg-white border border-gray-100 rounded-xl px-4 py-3">
+                  <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0">
+                    <ExternalLink size={14} className="text-accent" />
                   </div>
-                ) : (
-                  resources.map((r) => (
-                    <div key={r.id} className="flex items-center gap-3 bg-white border border-gray-100 rounded-xl px-4 py-3">
-                      <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0">
-                        {r.filename ? <Paperclip size={14} className="text-gray-400" /> : <ExternalLink size={14} className="text-accent" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{r.label || r.url}</p>
-                        {r.url && r.label && (
-                          <a
-                            href={r.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-accent hover:underline truncate block"
-                          >
-                            {r.url}
-                          </a>
-                        )}
-                        {r.filename && <p className="text-xs text-gray-400">File attachment</p>}
-                      </div>
-                      <button
-                        onClick={() => removeResource(r.id)}
-                        className="text-gray-300 hover:text-red-400 flex-shrink-0 transition-colors"
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{link.label || link.url}</p>
+                    {link.url && link.label && (
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-accent hover:underline truncate block"
                       >
-                        <X size={15} />
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
+                        {link.url}
+                      </a>
+                    )}
+                  </div>
+                  {/* Edit: prefill form and remove current link */}
+                  <button
+                    onClick={() => {
+                      setLinkForm({ label: link.label, url: link.url })
+                      removeLink(link.id)
+                      setAddLinkOpen(true)
+                    }}
+                    title="Edit link"
+                    className="text-gray-300 hover:text-accent flex-shrink-0 transition-colors mr-1"
+                  >
+                    <Link2 size={14} />
+                  </button>
+                  <button
+                    onClick={() => removeLink(link.id)}
+                    title="Remove link"
+                    className="text-gray-300 hover:text-red-400 flex-shrink-0 transition-colors"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* RIGHT: settings card */}
+          {/* RIGHT: settings card — unchanged */}
           <div className="bg-white rounded-2xl shadow-sm p-5 space-y-5 sticky top-4">
             {/* Header */}
             <div className="flex items-center gap-2.5 pb-1">
@@ -377,23 +320,26 @@ export function ProblemComposer({ mode, initial, onSave, onClose, saving = false
                   <ChevronDown size={14} className={`text-gray-400 transition-transform ${topicOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {topicOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden">
-                    {(['DSA', 'OS', 'Database', 'Other'] as const).map((t) => (
-                      <button
-                        key={t}
-                        onClick={() => { setType(t); setTopicOpen(false) }}
-                        className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm transition-colors hover:bg-gray-50 ${
-                          type === t ? 'text-accent font-semibold bg-red-50/50' : 'text-gray-700'
-                        }`}
-                      >
-                        <span className="font-mono text-xs text-gray-400 w-5 text-center flex-shrink-0">
-                          {TOPIC_ICONS[t]}
-                        </span>
-                        <span className="flex-1 text-left">{t}</span>
-                        <span className="flex items-center"><TypeBadge type={t} /></span>
-                      </button>
-                    ))}
-                  </div>
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setTopicOpen(false)} />
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden">
+                      {(['DSA', 'OS', 'Database', 'Other'] as const).map((t) => (
+                        <button
+                          key={t}
+                          onClick={() => { setType(t); setDifficulty(null); setTopicOpen(false) }}
+                          className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm transition-colors hover:bg-gray-50 ${
+                            type === t ? 'text-accent font-semibold bg-red-50/50' : 'text-gray-700'
+                          }`}
+                        >
+                          <span className="font-mono text-xs text-gray-400 w-5 text-center flex-shrink-0">
+                            {TOPIC_ICONS[t]}
+                          </span>
+                          <span className="flex-1 text-left">{t}</span>
+                          <span className="flex items-center"><TypeBadge type={t} /></span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
             </div>
@@ -450,22 +396,3 @@ export function ProblemComposer({ mode, initial, onSave, onClose, saving = false
   )
 }
 
-/* ── Toolbar helpers ── */
-function ToolbarBtn({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <button
-      title={label}
-      className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors"
-    >
-      {icon}
-    </button>
-  )
-}
-
-function ToolbarGroup({ children }: { children: React.ReactNode }) {
-  return <div className="flex items-center gap-0">{children}</div>
-}
-
-function ToolbarDivider() {
-  return <div className="w-px h-4 bg-gray-200 mx-1.5 flex-shrink-0" />
-}

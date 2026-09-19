@@ -78,6 +78,7 @@ export function TrainerProblems() {
       closeModal()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Could not save this problem')
+      throw err
     } finally {
       setSaving(false)
     }
@@ -158,61 +159,63 @@ export function TrainerProblems() {
             <span key={i} className="text-[10px] font-bold text-gray-400 tracking-widest">{h}</span>
           ))}
         </div>
-        {loading ? (
-          <div className="py-12 flex items-center justify-center text-sm text-gray-400 gap-2">
-            <Loader2 size={16} className="animate-spin" /> Loading problems...
-          </div>
-        ) : (
-          <>
-            {filtered.map((p, i) => (
-              <div
-                key={p.id}
-                className={`group grid grid-cols-[48px_1fr_120px_90px_88px] items-center px-6 py-4 hover:bg-gray-50 transition-colors ${
-                  i < filtered.length - 1 ? 'border-b border-gray-50' : ''
-                }`}
-              >
-                <span className="text-sm text-gray-400 cursor-pointer" onClick={() => void openDetail(p)}>{i + 1}</span>
-                <span
-                  className="text-sm font-semibold text-gray-900 cursor-pointer hover:text-accent transition-colors"
-                  onClick={() => void openDetail(p)}
+        <div className="overflow-y-auto" style={{ maxHeight: '440px' }}>
+          {loading ? (
+            <div className="py-12 flex items-center justify-center text-sm text-gray-400 gap-2">
+              <Loader2 size={16} className="animate-spin" /> Loading problems...
+            </div>
+          ) : (
+            <>
+              {filtered.map((p, i) => (
+                <div
+                  key={p.id}
+                  className={`group grid grid-cols-[48px_1fr_120px_90px_88px] items-center px-6 py-4 hover:bg-gray-50 transition-colors ${
+                    i < filtered.length - 1 ? 'border-b border-gray-50' : ''
+                  }`}
                 >
-                  {p.title}
-                </span>
-                <div className="cursor-pointer" onClick={() => void openDetail(p)}>
-                  <TypeBadge type={p.type} />
-                </div>
-                <div className="flex items-center cursor-pointer" onClick={() => void openDetail(p)}>
-                  {p.type === 'DSA' ? (
-                    <Badge variant={difficultyVariant[p.difficulty]}>
-                      {p.difficulty.charAt(0).toUpperCase() + p.difficulty.slice(1)}
-                    </Badge>
-                  ) : (
-                    <span className="text-xs text-gray-300">—</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity justify-end">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); void openEdit(p) }}
-                    title="Edit"
-                    className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-accent hover:bg-accent/10 transition-colors"
+                  <span className="text-sm text-gray-400 cursor-pointer" onClick={() => void openDetail(p)}>{i + 1}</span>
+                  <span
+                    className="text-sm font-semibold text-gray-900 cursor-pointer hover:text-accent transition-colors"
+                    onClick={() => void openDetail(p)}
                   >
-                    <Pencil size={14} />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); openDelete(p) }}
-                    title="Delete"
-                    className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                    {p.title}
+                  </span>
+                  <div className="cursor-pointer" onClick={() => void openDetail(p)}>
+                    <TypeBadge type={p.type} />
+                  </div>
+                  <div className="flex items-center cursor-pointer" onClick={() => void openDetail(p)}>
+                    {p.type === 'DSA' && p.difficulty ? (
+                      <Badge variant={difficultyVariant[p.difficulty]}>
+                        {p.difficulty.charAt(0).toUpperCase() + p.difficulty.slice(1)}
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-gray-300">—</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity justify-end">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); void openEdit(p) }}
+                      title="Edit"
+                      className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-accent hover:bg-accent/10 transition-colors"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openDelete(p) }}
+                      title="Delete"
+                      className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-            {filtered.length === 0 && (
-              <div className="py-12 text-center text-sm text-gray-400">No problems found</div>
-            )}
-          </>
-        )}
+              ))}
+              {filtered.length === 0 && (
+                <div className="py-12 text-center text-sm text-gray-400">No problems found</div>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* ── Detail drawer ── */}
@@ -226,7 +229,7 @@ export function TrainerProblems() {
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
               <div className="flex items-center gap-2 flex-wrap">
                 <TypeBadge type={detail.type} />
-                {detail.type === 'DSA' && (
+                {detail.type === 'DSA' && detail.difficulty && (
                   <Badge variant={difficultyVariant[detail.difficulty]}>
                     {detail.difficulty.charAt(0).toUpperCase() + detail.difficulty.slice(1)}
                   </Badge>
@@ -239,7 +242,9 @@ export function TrainerProblems() {
               {detail.description && (
                 <div>
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Description</p>
-                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{detail.description}</p>
+                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                    {detail.description}
+                  </p>
                 </div>
               )}
               {detail.resources.length > 0 && (
@@ -318,7 +323,7 @@ export function TrainerProblems() {
                 }
               : undefined
           }
-          onSave={(draft) => void handleSave(draft)}
+          onSave={handleSave}
           onClose={closeModal}
           saving={saving}
           error={actionError}

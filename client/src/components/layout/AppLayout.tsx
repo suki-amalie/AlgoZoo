@@ -4,7 +4,7 @@ import { TopHeader } from './TopHeader'
 
 export function AppLayout() {
   return (
-    <div className="flex h-screen bg-[#f0f2f5] overflow-hidden">
+    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: 'var(--page-bg)' }}>
       <Sidebar />
       <div className="ml-[220px] flex-1 flex flex-col overflow-hidden">
         <TopHeader />

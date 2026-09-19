@@ -36,7 +36,6 @@ function getNavItems(role: string): NavItem[] {
     { to: '/admin/dashboard', icon: <LayoutDashboard size={17} />, label: 'Dashboard' },
     { to: '/admin/classes', icon: <BookOpen size={17} />, label: 'Classes' },
     { to: '/admin/users', icon: <Users size={17} />, label: 'Users' },
-    { to: '/admin/problems', icon: <Library size={17} />, label: 'Problem Bank' },
   ]
 }
 
@@ -83,7 +82,10 @@ export function Sidebar() {
 
         <div className="pt-2">
           <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-3 pb-1">General</p>
-          <button className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-white/5 hover:text-white transition-all">
+          <button
+            onClick={() => navigate('/settings')}
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-white/5 hover:text-white transition-all"
+          >
             <Settings size={17} /> Settings
           </button>
         </div>

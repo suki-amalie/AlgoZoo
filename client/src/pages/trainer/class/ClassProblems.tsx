@@ -373,8 +373,8 @@ export function ClassProblems() {
               <div className="flex divide-x divide-gray-100" style={{ height: '480px' }}>
 
                 {/* LEFT: Problem Bank list */}
-                <div className="w-56 flex flex-col flex-shrink-0">
-                  <div className="p-3 border-b border-gray-100">
+                <div className="w-56 flex flex-col flex-shrink-0 min-h-0">
+                  <div className="p-3 border-b border-gray-100 flex-shrink-0">
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Problem Bank</p>
                     <div className="relative">
                       <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -386,7 +386,7 @@ export function ClassProblems() {
                       />
                     </div>
                   </div>
-                  <div className="flex-1 overflow-y-auto py-1">
+                  <div className="flex-1 min-h-0 overflow-y-auto py-1">
                     {bankLoading && (
                       <p className="text-xs text-gray-400 text-center py-8">Loading problem bank...</p>
                     )}

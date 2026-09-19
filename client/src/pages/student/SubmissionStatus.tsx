@@ -1,11 +1,63 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
-  ArrowLeft, CheckCircle2, Clock, Code2, FileText, Loader2, MessageSquare,
+  ArrowLeft, CheckCircle2, Clock, Code2, Download, FileText, ImageIcon, Loader2, MessageSquare, Paperclip,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { studentService } from '../../services/studentService'
+import { getFileUrl } from '../../services/fileService'
 import type { StudentProblemDetail } from '../../types/classProblem'
+import type { SubmissionContentBlock } from '../../types/submission'
+
+const IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+
+function useFileBlob(src: string | undefined): string | undefined {
+  const [blobUrl, setBlobUrl] = useState<string | undefined>()
+  useEffect(() => {
+    if (!src) return
+    let active = true
+    let created: string | undefined
+    fetch(src, { credentials: 'include' })
+      .then(r => r.ok ? r.blob() : Promise.reject())
+      .then(b => {
+        if (!active) return
+        created = URL.createObjectURL(b)
+        setBlobUrl(created)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+      if (created) URL.revokeObjectURL(created)
+    }
+  }, [src])
+  return blobUrl
+}
+
+function AttachmentPreview({ block }: { block: SubmissionContentBlock }) {
+  const rawSrc = block.file_id ? getFileUrl(block.file_id) : undefined
+  const lower = block.filename?.toLowerCase() ?? ''
+  const showImg = block.type === 'image' || IMAGE_EXTS.some((ext) => lower.endsWith(ext))
+  const blobUrl = useFileBlob(showImg ? rawSrc : undefined)
+  const label = block.filename || 'Uploaded file'
+  return (
+    <div className="border-b border-gray-50 last:border-b-0">
+      <div className="flex items-center gap-2 px-5 py-3 bg-gray-50 border-b border-gray-100">
+        {showImg ? <ImageIcon size={13} className="text-gray-400" /> : <Paperclip size={13} className="text-gray-400" />}
+        <span className="text-xs text-gray-500 flex-1 truncate">{label}</span>
+        {blobUrl && (
+          <a href={blobUrl} download={label} className="inline-flex items-center gap-1 text-xs text-accent hover:underline flex-shrink-0">
+            <Download size={12} /> Download
+          </a>
+        )}
+      </div>
+      {showImg && blobUrl && (
+        <div className="px-5 py-4 flex justify-center">
+          <img src={blobUrl} alt={label} className="max-w-full max-h-96 rounded-lg" />
+        </div>
+      )}
+    </div>
+  )
+}
 
 export function SubmissionStatus() {
   const { id = '' } = useParams()
@@ -74,9 +126,9 @@ export function SubmissionStatus() {
               <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Problem</span>
               <span className="text-sm font-semibold text-gray-700">{problem.title}</span>
             </div>
-            <div className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
               {problem.description || 'No description available.'}
-            </div>
+            </p>
             {problem.problemUrl && (
               <a
                 href={problem.problemUrl}
@@ -125,9 +177,7 @@ export function SubmissionStatus() {
                   </div>
                 )}
                 {(block.type === 'image' || block.type === 'file') && (
-                  <div className="px-5 py-4 border-b border-gray-50 last:border-b-0 text-sm text-gray-600">
-                    Attached file: {block.filename || 'Uploaded file'}
-                  </div>
+                  <AttachmentPreview block={block} />
                 )}
               </div>
             ))}

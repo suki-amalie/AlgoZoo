@@ -2,9 +2,213 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Page background CSS variable ──────────────────────────────── */
+:root {
+  --page-bg: #f0f2f5;
+}
+[data-theme="dark"] {
+  --page-bg: #0f1117;
+}
+[data-theme="lgbt"] {
+  --page-bg: #f4f0ff;
+}
+
 @layer base {
   body {
     font-family: 'Sora', system-ui, sans-serif;
-    background-color: #f0f2f5;
+    background-color: var(--page-bg);
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DARK THEME
+   Uses [data-theme="dark"] on <html> to override Tailwind
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Sidebar ─────────────────────────────────────────────────── */
+[data-theme="dark"] .bg-sidebar {
+  background-color: #0a0e17;
+}
+
+/* ── Page / Layout background ────────────────────────────────── */
+[data-theme="dark"] body {
+  background-color: #0f1117;
+}
+
+/* ── Cards / White backgrounds ───────────────────────────────── */
+[data-theme="dark"] .bg-white {
+  background-color: #1a2035;
+}
+
+/* ── Subtle section backgrounds ──────────────────────────────── */
+[data-theme="dark"] .bg-gray-50 {
+  background-color: #1f2640;
+}
+[data-theme="dark"] .hover\:bg-gray-50:hover {
+  background-color: #1f2640;
+}
+
+/* ── Secondary backgrounds / hover ──────────────────────────── */
+[data-theme="dark"] .bg-gray-100 {
+  background-color: #252d45;
+}
+[data-theme="dark"] .hover\:bg-gray-100:hover {
+  background-color: #252d45;
+}
+
+/* ── Divider backgrounds ─────────────────────────────────────── */
+[data-theme="dark"] .bg-gray-200 {
+  background-color: #2d3756;
+}
+
+/* ── Input backgrounds ───────────────────────────────────────── */
+[data-theme="dark"] input:not([class*="bg-"]),
+[data-theme="dark"] textarea:not([class*="bg-"]),
+[data-theme="dark"] select:not([class*="bg-"]) {
+  background-color: #1a2035;
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: #4a5568;
+}
+
+/* ── Text colors ─────────────────────────────────────────────── */
+[data-theme="dark"] .text-gray-900 {
+  color: #f0f4ff;
+}
+[data-theme="dark"] .text-gray-800 {
+  color: #e2e8f0;
+}
+[data-theme="dark"] .text-gray-700 {
+  color: #c9d4e8;
+}
+[data-theme="dark"] .text-gray-600 {
+  color: #8899b8;
+}
+[data-theme="dark"] .text-gray-500 {
+  color: #5e6e8a;
+}
+[data-theme="dark"] .text-gray-400 {
+  color: #4a5568;
+}
+[data-theme="dark"] .text-gray-300 {
+  color: #374160;
+}
+
+/* ── Border colors ───────────────────────────────────────────── */
+[data-theme="dark"] .border-gray-100 {
+  border-color: #232a40;
+}
+[data-theme="dark"] .border-gray-200 {
+  border-color: #2a3254;
+}
+[data-theme="dark"] .border-gray-300 {
+  border-color: #364068;
+}
+[data-theme="dark"] .divide-gray-100 > * + * {
+  border-color: #232a40;
+}
+
+/* ── Focus border ────────────────────────────────────────────── */
+[data-theme="dark"] .focus\:border-accent\/60:focus {
+  border-color: rgba(220, 38, 38, 0.5);
+}
+
+/* ── Card shadow (subtler on dark) ───────────────────────────── */
+[data-theme="dark"] .shadow-sm {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+[data-theme="dark"] .shadow-xl {
+  box-shadow: 0 20px 40px 0 rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+/* ── TopHeader border ────────────────────────────────────────── */
+[data-theme="dark"] .border-b {
+  border-bottom-color: #232a40;
+}
+[data-theme="dark"] .border-t {
+  border-top-color: #232a40;
+}
+
+/* ── Badges (keep background readability in dark) ────────────── */
+[data-theme="dark"] .bg-green-50  { background-color: rgba(34,197,94,0.12); }
+[data-theme="dark"] .bg-red-50    { background-color: rgba(239,68,68,0.12); }
+[data-theme="dark"] .bg-yellow-50 { background-color: rgba(234,179,8,0.12); }
+[data-theme="dark"] .bg-blue-50   { background-color: rgba(59,130,246,0.12); }
+[data-theme="dark"] .bg-orange-50 { background-color: rgba(249,115,22,0.12); }
+[data-theme="dark"] .bg-purple-50 { background-color: rgba(168,85,247,0.12); }
+
+/* ── TopHeader bg ────────────────────────────────────────────── */
+[data-theme="dark"] header.bg-white {
+  background-color: #151c2e;
+  border-bottom-color: #232a40;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LGBT THEME
+   Tasteful Pride accent — keeps the existing UI structure,
+   adds rainbow accents and a soft warm-cool background.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Sidebar — dark base with rainbow right-edge stripe ─────── */
+[data-theme="lgbt"] .bg-sidebar {
+  background-color: #1a1f2e;
+}
+[data-theme="lgbt"] .bg-sidebar::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(
+    180deg,
+    #f87171 0%,
+    #fb923c 18%,
+    #fbbf24 36%,
+    #4ade80 54%,
+    #60a5fa 72%,
+    #a78bfa 90%,
+    #f472b6 100%
+  );
+  pointer-events: none;
+}
+
+/* ── Active nav item — soft rainbow gradient instead of solid red */
+[data-theme="lgbt"] a.bg-accent,
+[data-theme="lgbt"] .nav-active {
+  background: linear-gradient(135deg, #dc2626 0%, #db2777 40%, #7c3aed 100%);
+}
+
+/* ── Cards — white with subtle rainbow bottom accent ─────────── */
+[data-theme="lgbt"] .bg-white.rounded-2xl {
+  border-bottom: 2px solid transparent;
+  background-clip: padding-box;
+  box-shadow:
+    0 1px 3px 0 rgba(139, 92, 246, 0.08),
+    0 1px 2px -1px rgba(139, 92, 246, 0.05);
+}
+
+/* ── Card shadow — soft purple tint ─────────────────────────── */
+[data-theme="lgbt"] .shadow-sm {
+  box-shadow:
+    0 1px 3px 0 rgba(139, 92, 246, 0.1),
+    0 1px 2px -1px rgba(236, 72, 153, 0.06);
+}
+
+/* ── Body background — very soft lavender ───────────────────── */
+[data-theme="lgbt"] body {
+  background-color: #f4f0ff;
+}
+
+/* ── Subtle background tint for gray-50 ─────────────────────── */
+[data-theme="lgbt"] .bg-gray-50 {
+  background-color: #f8f5ff;
+}
+
+/* ── TopHeader — very subtle rainbow border ──────────────────── */
+[data-theme="lgbt"] header.bg-white {
+  border-bottom: 1px solid #e9d5ff;
 }

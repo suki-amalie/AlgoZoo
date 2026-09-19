@@ -2,8 +2,10 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import { AuthProvider } from './context/AuthContext'
 import { useAuth } from './hooks/useAuth'
 import { NotificationProvider } from './context/NotificationContext'
+import { ThemeProvider } from './context/ThemeContext'
 import { AppLayout } from './components/layout/AppLayout'
 import { NotificationsPage } from './pages/NotificationsPage'
+import { SettingsPage } from './pages/SettingsPage'
 
 // Auth
 import { LoginPage } from './pages/auth/LoginPage'
@@ -79,8 +81,9 @@ function AppRoutes() {
         <Route path="/admin/users" element={<AdminUsers />} />
         <Route path="/admin/problems" element={<AdminProblems />} />
 
-        {/* Notifications (all roles) */}
+        {/* Shared routes (all roles) */}
         <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Route>
 
@@ -91,13 +94,15 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <NotificationProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </NotificationProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <NotificationProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </NotificationProvider>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }
 

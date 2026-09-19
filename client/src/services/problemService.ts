@@ -3,7 +3,7 @@ import type { BackendProblemType, Difficulty, Problem, ProblemDetailResponse, Pr
 
 const typeToUi: Record<BackendProblemType, Problem['type']> = { DSA: 'DSA', OS: 'OS', DB: 'Database', OTHER: 'Other' }
 const typeToBackend: Record<Problem['type'], BackendProblemType> = { DSA: 'DSA', OS: 'OS', Database: 'DB', Other: 'OTHER' }
-const difficultyToUi = (value: 'Easy' | 'Medium' | 'Hard' | null): Difficulty => value === 'Easy' ? 'easy' : value === 'Hard' ? 'hard' : 'medium'
+const difficultyToUi = (value: 'Easy' | 'Medium' | 'Hard' | null): Difficulty | null => value === 'Easy' ? 'easy' : value === 'Hard' ? 'hard' : value === 'Medium' ? 'medium' : null
 const difficultyToBackend = (value: Difficulty) => value === 'easy' ? 'Easy' : value === 'hard' ? 'Hard' : 'Medium'
 let resourceId = 1
 
@@ -37,7 +37,7 @@ export async function getProblemDetail(id: string) {
 }
 
 function toPayload(draft: ProblemDraft) {
-  return { title: draft.title, description: draft.description, problemType: typeToBackend[draft.type], difficulty: draft.type === 'DSA' ? difficultyToBackend(draft.difficulty) : null, problemUrl: draft.resources[0]?.url || undefined }
+  return { title: draft.title, description: draft.description, problemType: typeToBackend[draft.type], difficulty: draft.type === 'DSA' && draft.difficulty ? difficultyToBackend(draft.difficulty) : null, problemUrl: draft.resources[0]?.url || undefined }
 }
 
 export async function createProblem(draft: ProblemDraft) {

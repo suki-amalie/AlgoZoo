@@ -3,8 +3,8 @@ export type Difficulty = 'easy' | 'medium' | 'hard'
 export type ProblemDifficulty = 'Easy' | 'Medium' | 'Hard'
 
 export type Resource = { id: number; label: string; url: string; filename?: string }
-export type ProblemDraft = { title: string; type: ProblemType; difficulty: Difficulty; description: string; resources: Resource[] }
-export type Problem = { id: string; title: string; type: ProblemType; difficulty: Difficulty; description: string; resources: Resource[]; resource_url?: string }
+export type ProblemDraft = { title: string; type: ProblemType; difficulty: Difficulty | null; description: string; resources: Resource[] }
+export type Problem = { id: string; title: string; type: ProblemType; difficulty: Difficulty | null; description: string; resources: Resource[]; resource_url?: string }
 
 export type BackendProblemType = 'OS' | 'DB' | 'DSA' | 'OTHER'
 export interface ProblemListItem { problem_id: string; title: string; difficulty: ProblemDifficulty | null; problemType: BackendProblemType; created_by: string }

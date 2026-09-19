@@ -9,6 +9,30 @@ import { getProblemDetail } from '../../services/problemService'
 import type { SubmissionDetail, ContentBlock } from '../../types/submission'
 import type { Problem } from '../../types/problem'
 
+const IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+
+function useFileBlob(src: string | undefined): string | undefined {
+  const [blobUrl, setBlobUrl] = useState<string | undefined>()
+  useEffect(() => {
+    if (!src) return
+    let active = true
+    let created: string | undefined
+    fetch(src, { credentials: 'include' })
+      .then(r => r.ok ? r.blob() : Promise.reject())
+      .then(b => {
+        if (!active) return
+        created = URL.createObjectURL(b)
+        setBlobUrl(created)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+      if (created) URL.revokeObjectURL(created)
+    }
+  }, [src])
+  return blobUrl
+}
+
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
@@ -19,6 +43,11 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 function BlockView({ block }: { block: ContentBlock }) {
+  const rawSrc = block.file_id ? getFileUrl(block.file_id) : undefined
+  const lower = block.filename?.toLowerCase() ?? ''
+  const isImageBlock = block.type === 'image' || (block.type === 'file' && IMAGE_EXTS.some(ext => lower.endsWith(ext)))
+  const blobUrl = useFileBlob(isImageBlock ? rawSrc : undefined)
+
   if (block.type === 'text') {
     return (
       <div>
@@ -54,26 +83,21 @@ function BlockView({ block }: { block: ContentBlock }) {
   }
 
   if (block.type === 'image') {
-    const src = block.file_id ? getFileUrl(block.file_id) : undefined
     return (
       <div>
         <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-100 bg-gray-50">
           <ImageIcon size={13} className="text-gray-400" />
           <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Screenshot</span>
           <span className="text-xs text-gray-400 ml-1">{block.filename}</span>
-          {src && (
-            <a
-              href={src}
-              download={block.filename}
-              className="ml-auto inline-flex items-center gap-1 text-xs text-accent hover:underline"
-            >
+          {blobUrl && (
+            <a href={blobUrl} download={block.filename} className="ml-auto inline-flex items-center gap-1 text-xs text-accent hover:underline">
               <Download size={12} /> Download
             </a>
           )}
         </div>
         <div className="p-5 bg-gray-50 min-h-24 flex items-center justify-center">
-          {src ? (
-            <img src={src} alt={block.filename ?? 'Submitted screenshot'} className="max-w-full max-h-96 rounded-lg" />
+          {blobUrl ? (
+            <img src={blobUrl} alt={block.filename ?? 'Submitted screenshot'} className="max-w-full max-h-96 rounded-lg" />
           ) : (
             <div className="flex flex-col items-center gap-2 text-gray-400">
               <ImageIcon size={28} />
@@ -86,23 +110,28 @@ function BlockView({ block }: { block: ContentBlock }) {
   }
 
   if (block.type === 'file') {
-    const src = block.file_id ? getFileUrl(block.file_id) : undefined
-    const isPdf = block.filename?.toLowerCase().endsWith('.pdf')
+    const isPdf = lower.endsWith('.pdf')
+    const isImageFile = IMAGE_EXTS.some(ext => lower.endsWith(ext))
     return (
       <div>
-        <div className="flex items-center gap-3 px-5 py-4">
-          <Paperclip size={15} className="text-gray-400 flex-shrink-0" />
-          {src ? (
-            <a href={src} download={block.filename} className="text-sm text-accent hover:underline inline-flex items-center gap-1.5">
-              {block.filename}
-              <Download size={13} />
+        <div className={`flex items-center gap-3 px-5 py-4${isImageFile ? ' border-b border-gray-100 bg-gray-50' : ''}`}>
+          {isImageFile ? <ImageIcon size={15} className="text-gray-400 flex-shrink-0" /> : <Paperclip size={15} className="text-gray-400 flex-shrink-0" />}
+          {blobUrl ? (
+            <a href={blobUrl} download={block.filename} className="text-sm text-accent hover:underline inline-flex items-center gap-1.5 flex-1 min-w-0">
+              <span className="truncate">{block.filename}</span>
+              <Download size={13} className="flex-shrink-0" />
             </a>
           ) : (
-            <span className="text-sm text-gray-700">{block.filename}</span>
+            <span className="text-sm text-gray-700 flex-1 truncate">{block.filename}</span>
           )}
         </div>
-        {src && isPdf && (
-          <iframe src={src} title={block.filename ?? 'PDF preview'} className="w-full h-96 border-t border-gray-100" />
+        {blobUrl && isImageFile && (
+          <div className="p-5 bg-gray-50 flex items-center justify-center">
+            <img src={blobUrl} alt={block.filename ?? 'Attached image'} className="max-w-full max-h-96 rounded-lg" />
+          </div>
+        )}
+        {rawSrc && isPdf && (
+          <iframe src={rawSrc} title={block.filename ?? 'PDF preview'} className="w-full h-96 border-t border-gray-100" />
         )}
       </div>
     )
@@ -237,7 +266,9 @@ export function ReviewSubmission() {
             <div className="px-5 py-4 space-y-3">
               {problem ? (
                 <>
-                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{problem.description}</p>
+                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                    {problem.description || ''}
+                  </p>
                   {problem.resource_url && (
                     <a href={problem.resource_url} target="_blank" rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-xs text-accent hover:underline">
