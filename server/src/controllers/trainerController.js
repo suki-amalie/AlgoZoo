@@ -6,6 +6,7 @@ const Problem = require('../models/problem');
 const Submission = require('../models/submission');
 const User = require('../models/user');
 const { checkTrainerOwnsClass } = require('../utils/classOwnership');
+const { sendSubmissionFeedbackEmail } = require('../utils/sendEmail');
 const { notifyOne, notifyMany } = require('../utils/notify');
 
 // Helper: class ids a trainer belongs to
@@ -347,7 +348,9 @@ exports.reviewSubmission = async (req, res) => {
       return res.status(404).json({ status: 'error', message: 'Submission does not exist' });
     }
 
-    const classProblem = await ClassProblem.findById(submission.class_problem_id);
+    const classProblem = await ClassProblem.findById(submission.class_problem_id)
+    .populate('problem_id', 'title')
+    .populate('class_id', 'name');
     if (!classProblem) {
       return res.status(404).json({ status: 'error', message: 'Related class problem does not exist' });
     }
@@ -364,7 +367,7 @@ exports.reviewSubmission = async (req, res) => {
     submission.reviewed_by = req.user._id;
     submission.reviewed_at = Date.now();
     await submission.save();
-
+    
     const [problem, cls] = await Promise.all([
       Problem.findById(classProblem.problem_id),
       Class.findById(classProblem.class_id),
@@ -379,6 +382,25 @@ exports.reviewSubmission = async (req, res) => {
       entityId: submission._id,
       linkTo: `/student/submissions/${submission._id}`,
     });
+    
+    User.findById(submission.student_id)
+      .select('email fullname')
+      .then((student) => {
+        if (student?.email) {
+          sendSubmissionFeedbackEmail({
+            to: student.email,
+            studentName: student.fullname,
+            problemTitle: classProblem.problem_id?.title || 'your assignment',
+            className: classProblem.class_id?.name || '',
+            feedback: submission.feedback,
+            classId: classProblem.class_id?._id,
+            classProblemId: classProblem._id,
+          });
+        } else {
+          console.error(`No email on file for student ${submission.student_id}, skipping notification.`);
+        }
+      })
+      .catch((err) => console.error('Fetch student for email error:', err));
 
     res.status(200).json({
       status: 'success',
