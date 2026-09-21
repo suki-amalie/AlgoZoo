@@ -61,9 +61,7 @@ export function StudentJoinPage() {
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
         <div className="px-8 pt-8 pb-6 border-b border-gray-100">
           <div className="flex items-center gap-3 mb-5">
-            <div className="w-9 h-9 rounded-xl bg-accent flex items-center justify-center">
-              <span className="text-white font-black text-sm">AZ</span>
-            </div>
+            <img src="/logo.png" alt="AlgoZoo" className="w-9 h-9 rounded-xl object-cover" />
             <span className="font-bold text-lg text-gray-900">AlgoZoo</span>
           </div>
           <h1 className="text-xl font-bold text-gray-900 mb-1">Join {classInfo.name}</h1>
