@@ -100,7 +100,7 @@ function BlockView({ block }: { block: ContentBlock }) {
         </div>
         <div className="p-5 bg-gray-50 min-h-24 flex items-center justify-center">
           {blobUrl ? (
-            <img src={blobUrl} alt={block.filename ?? 'Submitted screenshot'} className="max-w-full max-h-96 rounded-lg" />
+            <img src={blobUrl} alt={block.filename ?? 'Submitted screenshot'} className="max-w-full max-h-[600px] rounded-lg" />
           ) : (
             <div className="flex flex-col items-center gap-2 text-gray-400">
               <ImageIcon size={28} />
@@ -130,11 +130,11 @@ function BlockView({ block }: { block: ContentBlock }) {
         </div>
         {blobUrl && isImageFile && (
           <div className="p-5 bg-gray-50 flex items-center justify-center">
-            <img src={blobUrl} alt={block.filename ?? 'Attached image'} className="max-w-full max-h-96 rounded-lg" />
+            <img src={blobUrl} alt={block.filename ?? 'Attached image'} className="max-w-full max-h-[600px] rounded-lg" />
           </div>
         )}
         {blobUrl && isPdf && (
-          <iframe src={blobUrl} title={block.filename ?? 'PDF preview'} className="w-full h-96 border-t border-gray-100" />
+          <iframe src={blobUrl} title={block.filename ?? 'PDF preview'} className="w-full h-[600px] border-t border-gray-100" />
         )}
       </div>
     )
