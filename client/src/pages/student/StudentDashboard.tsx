@@ -5,19 +5,17 @@ import { StatCard } from '../../components/ui/StatCard'
 import { Badge } from '../../components/ui/Badge'
 import { useAuth } from '../../hooks/useAuth'
 import { studentService } from '../../services/studentService'
-import type { StudentClass } from '../../types/class'
 import type { StudentDashboard as DashboardData } from '../../types/studentDashboard'
 
 export function StudentDashboard() {
   const { user } = useAuth()
-  const [classes, setClasses] = useState<StudentClass[]>([])
   const [selectedClass, setSelectedClass] = useState('')
   const [dashboard, setDashboard] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    studentService.getClasses().then((response) => { setClasses(response.data); setSelectedClass(response.data[0]?.classId || '') }).catch((requestError) => setError(requestError instanceof Error ? requestError.message : 'Unable to load classes')).finally(() => setLoading(false))
+    studentService.getClasses().then((response) => { setSelectedClass(response.data[0]?.classId || '') }).catch((requestError) => setError(requestError instanceof Error ? requestError.message : 'Unable to load classes')).finally(() => setLoading(false))
   }, [])
 
   useEffect(() => {

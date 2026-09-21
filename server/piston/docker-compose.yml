@@ -1,0 +1,58 @@
+# Self-hosted Piston (code execution engine) backing the "Run Code" feature.
+# The public Piston API now requires a whitelist, so this replaces it for local/dev use.
+#
+# Setup:
+#   1. docker compose -f server/piston/docker-compose.yml up -d --build
+#      (--build is needed the first time / after Dockerfile changes, since this now
+#      builds a local image with gdb added on top of upstream Piston, rather than
+#      pulling upstream directly — see Dockerfile.)
+#   2. Install the language runtimes you need, e.g.:
+#        curl -X POST http://localhost:2000/api/v2/packages \
+#          -H "Content-Type: application/json" \
+#          -d '{"language":"python","version":"3.12.0"}'
+#      Run `curl http://localhost:2000/api/v2/packages` to see available language/version pairs.
+#   3. server/.env already points PISTON_API_URL at http://localhost:2000/api/v2
+services:
+  api:
+    build: .
+    image: algozoo-piston-with-gdb
+    restart: always
+    privileged: true
+    ports:
+      - "2000:2000"
+    volumes:
+      - ./piston_data/packages:/piston/packages
+    tmpfs:
+      - /piston/jobs:exec
+    environment:
+      # Piston's default output_max_size is 1024 bytes per stdio buffer. The Python
+      # tracer harness (server/src/utils/pythonTracer.js) prints the entire step-by-step
+      # trace as one JSON blob, which blows past that for anything beyond a few
+      # straight-line statements — Piston silently kills the sandbox ("stdout length
+      # exceeded" in its own logs), which surfaces to us as a confusing
+      # "Sandbox keeper received fatal signal 6" crash. Raise it well above the
+      # tracer's own worst-case bound (MAX_STEPS=500 * MAX_HEAP_OBJECTS=150).
+      - PISTON_OUTPUT_MAX_SIZE=8388608
+      # Default run timeout (wall clock) is 3000ms. The C++ tracer (server/src/utils/
+      # cppTracer.js) drives gdb through many sequential round-trips per traced step
+      # (list frames, list variables per frame, single-step) — each one is a real pipe
+      # write/read plus ptrace overhead, nested inside Piston's own sandboxing, so it's
+      # meaningfully slower than native execution. Raise generously.
+      - PISTON_RUN_TIMEOUT=15000
+      # Piston enforces run_timeout (wall clock) and run_cpu_time (actual CPU time used)
+      # as two INDEPENDENT limits — raising one does not raise the other. We'd only ever
+      # raised run_timeout, so run_cpu_time silently stayed at its 3000ms default and was
+      # killing every real gdb-driven C++ trace (which is CPU-heavy the whole time, unlike
+      # e.g. sleep(), which uses ~0 CPU and was passing at 8+ seconds wall clock even
+      # before this was set) with signal=SIGKILL, status="TO", cpu_time≈3000 — confirmed
+      # by reproducing the same kill with a plain CPU-bound busy loop that never touches
+      # gdb at all.
+      - PISTON_RUN_CPU_TIME=15000
+      # Default max_process_count is 64 per job, which should already be generous, but
+      # the C++ tracer needs at least 3 live processes at once (the driver itself, gdb,
+      # and the debuggee gdb spawns) — set explicitly as a safety margin, since an
+      # intermittent near-instant kill with very little CPU time used (rather than a
+      # slow-but-progressing timeout) is a symptom more consistent with a process/resource
+      # ceiling than a genuine timeout.
+      - PISTON_MAX_PROCESS_COUNT=128
+

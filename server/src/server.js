@@ -3,6 +3,10 @@ const app = require('../src/app/index');
 const { APP_PORT } = require('../src/config/env');
 const fileRoutes = require("./routes/fileRoutes");
 
+// Most hosts (Render, Railway, Heroku, ...) assign the port dynamically via
+// process.env.PORT and require the app to bind to it; APP_PORT stays the local-dev default.
+const PORT = process.env.PORT || APP_PORT;
+
 
 // middleware for uploading files
 app.use("/api/files", fileRoutes);
@@ -19,6 +23,6 @@ app.use((error, req, res, next) => {
 app.use(express.static('./public'))
 
 // Start the server
-app.listen(APP_PORT, () => {
-    console.log(`Server is running on port ${APP_PORT}`); // Corrected string interpolation
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`); // Corrected string interpolation
 });

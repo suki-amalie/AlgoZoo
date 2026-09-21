@@ -6,6 +6,7 @@ import {
 import { useAuth } from '../../hooks/useAuth'
 import { studentService } from '../../services/studentService'
 import { getFileUrl } from '../../services/fileService'
+import { sanitizeHtml } from '../../utils/sanitizeHtml'
 import type { StudentProblemDetail } from '../../types/classProblem'
 import type { SubmissionContentBlock } from '../../types/submission'
 
@@ -37,7 +38,8 @@ function AttachmentPreview({ block }: { block: SubmissionContentBlock }) {
   const rawSrc = block.file_id ? getFileUrl(block.file_id) : undefined
   const lower = block.filename?.toLowerCase() ?? ''
   const showImg = block.type === 'image' || IMAGE_EXTS.some((ext) => lower.endsWith(ext))
-  const blobUrl = useFileBlob(showImg ? rawSrc : undefined)
+  const isPdf = lower.endsWith('.pdf')
+  const blobUrl = useFileBlob(rawSrc)
   const label = block.filename || 'Uploaded file'
   return (
     <div className="border-b border-gray-50 last:border-b-0">
@@ -54,6 +56,9 @@ function AttachmentPreview({ block }: { block: SubmissionContentBlock }) {
         <div className="px-5 py-4 flex justify-center">
           <img src={blobUrl} alt={label} className="max-w-full max-h-96 rounded-lg" />
         </div>
+      )}
+      {isPdf && blobUrl && (
+        <iframe src={blobUrl} title={label} className="w-full h-96 border-t border-gray-100" />
       )}
     </div>
   )
@@ -161,7 +166,10 @@ export function SubmissionStatus() {
                       <FileText size={13} className="text-gray-400" />
                       <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Text</span>
                     </div>
-                    <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">{block.content}</p>
+                    <div
+                      className="rich-text-output text-sm text-gray-700 whitespace-pre-line leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.content ?? '') }}
+                    />
                   </div>
                 )}
                 {block.type === 'code' && (

@@ -1,6 +1,7 @@
 const {currentDateTime,getDateAfterDuration} = require('../utils/date');
 const {JWT_ACCESS_TOKEN_EXPIRES,JWT_REFRESH_TOKEN_EXPIRES} = require('../config/env');
 const {generateAccessToken,generateRefreshToken} = require('../utils/jwt');
+const {baseCookieOptions} = require('../utils/cookieOptions');
 
 
 // Successful login response
@@ -10,15 +11,13 @@ const loginResponse = (res, user) => {
   const refreshToken = generateRefreshToken(user._id);
 
   const accessCookieOptions = {
+    ...baseCookieOptions,
     expires: getDateAfterDuration(JWT_ACCESS_TOKEN_EXPIRES),
-    httpOnly: true,
-    sameSite: 'strict'
   };
 
   const refreshCookieOptions = {
+    ...baseCookieOptions,
     expires: getDateAfterDuration(JWT_REFRESH_TOKEN_EXPIRES),
-    httpOnly: true,
-    sameSite: 'strict'
   };
 
   return res

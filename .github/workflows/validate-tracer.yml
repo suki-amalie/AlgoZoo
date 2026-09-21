@@ -1,0 +1,63 @@
+name: Validate Python Tracer
+
+# GitHub-hosted runners are real Linux, unlike the Windows/WSL2/Docker Desktop dev setup
+# where the multi-frame Python tracer couldn't be validated (see server/scripts/validate-tracer.js
+# and the "Known Blocker" section of the Code Visualizer status doc). Run this manually to
+# confirm the tracer actually works end to end.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Start self-hosted Piston
+        run: docker compose -f server/piston/docker-compose.yml up -d
+
+      - name: Wait for Piston to be ready
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:2000/api/v2/runtimes > /dev/null; then
+              echo "Piston is up"
+              exit 0
+            fi
+            echo "Waiting for Piston... ($i/30)"
+            sleep 2
+          done
+          echo "Piston did not become ready in time" >&2
+          docker logs $(docker ps -q --filter "name=piston") || true
+          exit 1
+
+      - name: Install Python runtime
+        run: |
+          curl -sf -X POST http://localhost:2000/api/v2/packages \
+            -H "Content-Type: application/json" \
+            -d '{"language":"python","version":"3.12.0"}'
+
+      - name: Install server dependencies
+        working-directory: server
+        run: npm ci
+
+      - name: Run tracer validation
+        working-directory: server
+        env:
+          PISTON_API_URL: http://localhost:2000/api/v2
+        run: node scripts/validate-tracer.js
+
+      - name: Upload trace samples
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tracer-validation-output
+          path: server/scripts/tracer-validation-output/
+          if-no-files-found: ignore

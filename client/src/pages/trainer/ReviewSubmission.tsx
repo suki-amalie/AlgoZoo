@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button'
 import { getSubmissionDetail, reviewSubmission } from '../../services/submissionService'
 import { getFileUrl } from '../../services/fileService'
 import { getProblemDetail } from '../../services/problemService'
+import { sanitizeHtml } from '../../utils/sanitizeHtml'
 import type { SubmissionDetail, ContentBlock } from '../../types/submission'
 import type { Problem } from '../../types/problem'
 
@@ -45,8 +46,7 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 function BlockView({ block }: { block: ContentBlock }) {
   const rawSrc = block.file_id ? getFileUrl(block.file_id) : undefined
   const lower = block.filename?.toLowerCase() ?? ''
-  const isImageBlock = block.type === 'image' || (block.type === 'file' && IMAGE_EXTS.some(ext => lower.endsWith(ext)))
-  const blobUrl = useFileBlob(isImageBlock ? rawSrc : undefined)
+  const blobUrl = useFileBlob(rawSrc)
 
   if (block.type === 'text') {
     return (
@@ -55,7 +55,10 @@ function BlockView({ block }: { block: ContentBlock }) {
           <FileText size={13} className="text-gray-400" />
           <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Explanation</span>
         </div>
-        <div className="px-5 py-4 text-sm text-gray-700 leading-relaxed whitespace-pre-line">{block.content}</div>
+        <div
+          className="rich-text-output px-5 py-4 text-sm text-gray-700 leading-relaxed whitespace-pre-line"
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.content ?? '') }}
+        />
       </div>
     )
   }
@@ -130,8 +133,8 @@ function BlockView({ block }: { block: ContentBlock }) {
             <img src={blobUrl} alt={block.filename ?? 'Attached image'} className="max-w-full max-h-96 rounded-lg" />
           </div>
         )}
-        {rawSrc && isPdf && (
-          <iframe src={rawSrc} title={block.filename ?? 'PDF preview'} className="w-full h-96 border-t border-gray-100" />
+        {blobUrl && isPdf && (
+          <iframe src={blobUrl} title={block.filename ?? 'PDF preview'} className="w-full h-96 border-t border-gray-100" />
         )}
       </div>
     )

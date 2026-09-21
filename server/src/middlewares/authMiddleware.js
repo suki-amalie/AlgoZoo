@@ -3,6 +3,7 @@ const User = require('../models/user');
 const { JWT_SECRET_KEY, JWT_REFRESH_TOKEN_SECRET_KEY,JWT_ACCESS_TOKEN_EXPIRES } = require('../config/env');
 const { generateAccessToken } = require('../utils/jwt');
 const { getDateAfterDuration } = require('../utils/date');
+const { baseCookieOptions } = require('../utils/cookieOptions');
 // Middleware for detecting authenticated logged-in user
 exports.isAuthenticatedUser = async (req, res, next) => {
   try {
@@ -206,9 +207,8 @@ const tryRefreshAccessToken = (req, res, next) => {
       // Provide new access token and overwrite the cookie
       const newAccessToken = generateAccessToken(user._id);
       res.cookie('accessToken', newAccessToken, {
+        ...baseCookieOptions,
         expires: getDateAfterDuration(JWT_ACCESS_TOKEN_EXPIRES),
-        httpOnly: true,
-        sameSite: 'strict',
       });
 
       req.user = user;
