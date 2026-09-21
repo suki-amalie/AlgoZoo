@@ -54,11 +54,11 @@ function AttachmentPreview({ block }: { block: SubmissionContentBlock }) {
       </div>
       {showImg && blobUrl && (
         <div className="px-5 py-4 flex justify-center">
-          <img src={blobUrl} alt={label} className="max-w-full max-h-96 rounded-lg" />
+          <img src={blobUrl} alt={label} className="max-w-full max-h-[600px] rounded-lg" />
         </div>
       )}
       {isPdf && blobUrl && (
-        <iframe src={blobUrl} title={label} className="w-full h-96 border-t border-gray-100" />
+        <iframe src={blobUrl} title={label} className="w-full h-[600px] border-t border-gray-100" />
       )}
     </div>
   )

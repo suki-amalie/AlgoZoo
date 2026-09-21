@@ -93,11 +93,11 @@ function AttachmentPreview({ block }: { block: SubmissionContentBlock }) {
       </div>
       {showImg && blobUrl && (
         <div className="px-5 py-4 flex justify-center">
-          <img src={blobUrl} alt={label} className="max-w-full max-h-96 rounded-lg" />
+          <img src={blobUrl} alt={label} className="max-w-full max-h-[600px] rounded-lg" />
         </div>
       )}
       {isPdf && blobUrl && (
-        <iframe src={blobUrl} title={label} className="w-full h-96 border-t border-gray-100" />
+        <iframe src={blobUrl} title={label} className="w-full h-[600px] border-t border-gray-100" />
       )}
     </div>
   )
@@ -493,10 +493,10 @@ function FileEditor({ block, onDelete }: { block: FileBlockDraft; onDelete: () =
       </div>
       {isImage ? (
         <div className="px-4 py-3 flex justify-center">
-          <img src={block.previewUrl} alt={block.filename} className="max-w-full max-h-64 rounded-lg object-contain" />
+          <img src={block.previewUrl} alt={block.filename} className="max-w-full max-h-[600px] rounded-lg object-contain" />
         </div>
       ) : isPdf ? (
-        <iframe src={block.previewUrl} title={block.filename} className="w-full h-64" />
+        <iframe src={block.previewUrl} title={block.filename} className="w-full h-[600px]" />
       ) : (
         <div className="px-4 py-3 flex items-center gap-2 text-sm text-gray-500">
           <Paperclip size={14} className="text-gray-400" /> {block.filename}
